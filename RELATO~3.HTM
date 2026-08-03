@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desempenho da Geração de Demanda — Julho 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dark:#233A4A; --blue:#62AADD; --white:#FFFFFF;
+    --gray-bg:#F4F6F8; --gray:#8A9BB0;
+    --red:#E05B5B; --green:#4CAF7D; --amber:#F5A623;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:#111e28;width:100vw;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  .deck{width:100vw;height:100vh;position:relative;overflow:hidden;}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;padding:50px 76px 40px;opacity:0;transition:opacity .35s ease;}
+  .slide.active{display:flex;opacity:1;}
+  .slide-dark{background:var(--dark);color:var(--white);}
+  .slide-light{background:var(--white);color:var(--dark);}
+  .slide-gray{background:var(--gray-bg);color:var(--dark);}
+  .logo{position:absolute;top:28px;right:56px;font-size:16px;font-weight:700;}
+  .on-dark .lh{color:var(--white);} .on-dark .lg{color:var(--blue);}
+  .on-light .lh{color:var(--dark);} .on-light .lg{color:var(--blue);}
+  .cat{font-size:10px;font-weight:700;letter-spacing:2.8px;text-transform:uppercase;color:var(--blue);margin-bottom:9px;}
+  .title{font-size:36px;font-weight:800;line-height:1.15;margin-bottom:30px;}
+  .slide-dark .title{color:var(--white);}
+  .slide-light .title,.slide-gray .title{color:var(--dark);}
+  .fn{margin-top:auto;padding-top:14px;font-size:11px;line-height:1.55;color:var(--gray);}
+  .slide-dark .fn{color:rgba(255,255,255,.4);}
+  /* bars */
+  .bars{display:flex;flex-direction:column;justify-content:center;flex:1;max-width:880px;}
+  .bar-row{display:flex;align-items:center;gap:12px;margin-bottom:22px;}
+  .bar-lbl{font-size:13px;font-weight:600;color:var(--dark);min-width:230px;}
+  .bar-track{flex:1;height:16px;background:#dde5ed;border-radius:8px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:8px;}
+  .bar-val{font-size:13px;font-weight:700;color:var(--dark);min-width:200px;text-align:right;}
+  /* kpi */
+  .kpi-grid{display:grid;gap:18px;flex:1;align-content:center;}
+  .kpi-3{grid-template-columns:repeat(3,1fr);}
+  .kpi-4{grid-template-columns:repeat(4,1fr);}
+  .kpi-2x3{grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);}
+  .kcard{background:var(--gray-bg);border-radius:14px;padding:24px 20px;}
+  .kcard-dark{background:rgba(255,255,255,.08);border-radius:14px;padding:24px 20px;}
+  .kval{font-size:42px;font-weight:800;color:var(--dark);line-height:1;margin-bottom:6px;}
+  .kval-white{font-size:42px;font-weight:800;color:var(--white);line-height:1;margin-bottom:6px;}
+  .kval-blue{font-size:42px;font-weight:800;color:var(--blue);line-height:1;margin-bottom:6px;}
+  .kval-red{font-size:42px;font-weight:800;color:var(--red);line-height:1;margin-bottom:6px;}
+  .klbl{font-size:12px;font-weight:500;color:var(--gray);}
+  .klbl-dark{font-size:12px;font-weight:500;color:rgba(255,255,255,.45);}
+  /* risk */
+  .risk-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;flex:1;align-content:center;}
+  .rcard{background:rgba(255,255,255,.95);border-radius:12px;padding:20px 20px 20px 18px;border-left:4px solid;}
+  .rtag{font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px;}
+  .rtitle{font-size:16px;font-weight:700;color:var(--dark);margin-bottom:7px;line-height:1.3;}
+  .rbody{font-size:12px;font-weight:400;color:#4d5a68;line-height:1.55;}
+  /* funnel */
+  .funnel-col{display:flex;flex-direction:column;}
+  .fcol-lbl{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--blue);margin-bottom:16px;}
+  .frow{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+  .frlbl{font-size:13px;font-weight:500;color:#5a6b7a;min-width:200px;}
+  .fbar{height:48px;border-radius:8px;display:flex;align-items:center;padding:0 16px;color:#fff;font-size:17px;font-weight:800;}
+  .fpct{font-size:12px;font-weight:600;opacity:.75;margin-left:7px;}
+  /* ldot */
+  .ldot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+  .litem{display:flex;align-items:center;gap:11px;margin-bottom:14px;font-size:14px;font-weight:500;}
+  /* safra table */
+  .safra-col{background:var(--gray-bg);border-radius:14px;padding:20px 24px;flex:1;}
+  .safra-col h4{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--blue);margin-bottom:16px;}
+  .safra-row{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;margin-bottom:6px;font-size:13px;}
+  .safra-row.highlight{background:rgba(98,170,221,.15);font-weight:700;}
+  .safra-row.normal{background:rgba(0,0,0,.03);}
+  .safra-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--blue);color:#fff;font-size:10px;font-weight:700;border-radius:20px;padding:2px 9px;margin-left:6px;}
+  /* nav */
+  .nav{position:fixed;bottom:22px;right:50px;display:flex;align-items:center;gap:12px;z-index:999;}
+  .nbtn{width:36px;height:36px;border-radius:50%;border:2px solid rgba(98,170,221,.45);background:rgba(35,58,74,.75);color:var(--blue);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;backdrop-filter:blur(6px);font-family:inherit;}
+  .nbtn:hover{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .ncnt{font-size:12px;font-weight:600;color:rgba(255,255,255,.6);min-width:40px;text-align:center;font-family:'Plus Jakarta Sans',sans-serif;}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<!-- ═══ S1 · CAPA ═══ -->
+<div class="slide slide-dark active">
+  <div class="logo on-dark"><span class="lh">Health</span><span class="lg">Go</span></div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding-bottom:0;">
+    <div class="cat">RELATÓRIO EXECUTIVO · MARKETING</div>
+    <h1 style="font-size:50px;font-weight:800;color:#fff;line-height:1.1;max-width:680px;">Desempenho da<br>Geração de Demanda</h1>
+    <p style="font-size:15px;color:rgba(255,255,255,.5);margin-top:16px;max-width:560px;line-height:1.65;">Julho de 2026 — HealthGo Air · Visão consolidada de mídia paga, canais orgânicos e análise de conversão por safra de leads.</p>
+  </div>
+</div>
+
+<!-- ═══ S2 · TOTAL DE LEADS ═══ -->
+<div class="slide slide-light">
+  <div class="logo on-light"><span class="lh">Health</span><span class="lg">Go</span></div>
+  <div class="cat">VISÃO GERAL</div>
+  <h2 class="title">Total de Leads no CRM por Canal</h2>
+  <div style="display:flex;align-items:center;gap:80px;flex:1;">
+    <div style="flex-shrink:0;">
+      <svg width="220" height="220" viewBox="0 0 220 220">
+        <circle cx="110" cy="110" r="84" fill="none" stroke="#dde5ed" stroke-width="32"/>
+        <circle cx="110" cy="110" r="84" fill="none" stroke="#233A4A" stroke-width="32"
+          stroke-dasharray="354.0 527.8" transform="rotate(-90 110 110)"/>
+        <circle cx="110" cy="110" r="84" fill="none" stroke="#62AADD" stroke-width="32"
+          stroke-dasharray="173.8 527.8" stroke-dashoffset="-354.0" transform="rotate(-90 110 110)"/>
+        <text x="110" y="102" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-weight="800" font-size="28" fill="#233A4A">817</text>
+        <text x="110" y="124" text-anchor="middle" font-family="Plus Jakarta Sans,sans-serif" font-weight="600" font-size="10" fill="#8A9BB0" letter-spacing="1.5">LEADS CRM</text>
+      </svg>
+    </div>
+    <div>
+      <div class="litem"><div class="ldot" style="background:#233A4A;"></div><span>Mídia Paga (CRM) — <strong>548 leads (67,1%)</strong></span></div>
+      <div class="litem"><div class="ldot" style="background:#62AADD;"></div><span>Canal Orgânico — <strong>269 leads (32,9%)</strong></span></div>
+      <div style="margin-top:24px;padding:16px 20px;background:#f4f6f8;border-radius:10px;max-width:380px;">
+        <p style="font-size:12.5px;color:#4d5a68;line-height:1.6;"><strong style="color:#233A4A;">Leads reais gerados (mídia paga):</strong> 647 — Meta Ads 629 + Google Ads 18. A diferença em relação ao CRM se deve à sincronização parcial dos formulários Meta.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ S3 · DESDOBRAMENTO PAGO ═══ -->
+<div class="slide slide-light">
+  <div class="logo on-light"><span class="lh">Health</span><span class="lg">Go</span></div>
+  <div class="cat">MÍDIA PAGA</div>
+  <h2 class="title">Desdobramento por Plataforma</h2>
+  <div class="bars">
+    <!-- Meta Ads -->
+    <div class="bar-row">
+      <div class="bar-lbl">Meta Ads — Leads</div>
+      <div class="bar-track"><div class="bar-fill" style="width:97.2%;background:#233A4A;"></div></div>
+      <div class="bar-val">629 leads · 97,2%</div>
+    </div>
+    <div class="bar-row" style="margin-top:-10px;margin-bottom:28px;">
+      <div class="bar-lbl" style="color:var(--gray);font-weight:500;font-size:12px;">↳ MQLs gerados</div>
+      <div class="bar-track"><div class="bar-fill" style="width:83.6%;background:#62AADD;opacity:.7;"></div></div>
+      <div class="bar-val" style="font-size:12px;color:var(--gray);">526 MQLs · 83,6% dos leads</div>
+    </div>
+    <!-- Google Ads -->
+    <div class="bar-row">
+      <div class="bar-lbl">Google Ads — Leads</div>
+      <div class="bar-track"><div class="bar-fill" style="width:2.8%;background:#233A4A;"></div></div>
+      <div class="bar-val">18 leads · 2,8%</div>
+    </div>
+    <div class="bar-row" style="margin-top:-10px;">
+      <div class="bar-lbl" style="color:var(--gray);font-weight:500;font-size:12px;">↳ MQLs gerados</div>
+      <div class="bar-track"><div class="bar-fill" style="width:38.9%;background:#62AADD;opacity:.7;"></div></div>
+      <div class="bar-val" style="font-size:12px;color:var(--gray);">7 MQLs · 38,9% dos leads</div>
+    </div>
+  </div>
+  <p class="fn" style="color:var(--dark);">Total pago: 647 leads → 533 MQLs (taxa média 82,3%). Meta concentra 97,2% do volume e 98,7% dos MQLs pagos.</p>
+</div>
+
+<!-- ═══ S4 · CANAL ORGÂNICO ═══ -->
+<div class="slide slide-light">
+  <div class="logo on-light"><span class="lh">Health</span><span class="lg">Go</span></div>
+  <div class="cat">CANAL ORGÂNICO</div>
+  <h2 class="title">Desdobramento por Origem</h2>
+  <div class="bars">
+    <div class="bar-row">
+      <div class="bar-lbl">WhatsApp / Blip (orgânico)</div>
+      <div class="bar-track"><div class="bar-fill" style="width:49.4%;background:#233A4A;"></div></div>
+      <div class="bar-val">133 leads · 49,4%</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-lbl">Site / Orgânico direto</div>
+      <div class="bar-track"><div class="bar-fill" style="width:44.2%;background:#62AADD;"></div></div>
+      <div class="bar-val">119 leads · 44,2%</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-lbl">Meta Ads (cruzamento)</div>
+      <div class="bar-track"><div class="bar-fill" style="width:5.2%;background:#8A9BB0;"></div></div>
+      <div class="bar-val">14 leads · 5,2%</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-lbl">Indicação</div>
+      <div class="bar-track"><div class="bar-fill" style="width:1.1%;background:#8A9BB0;opacity:.5;"></div></div>
+      <div class="bar-val">3 leads · 1,1%</div>
+    </div>
+  </div>
+  <p class="fn" style="color:var(--dark);">Os 14 leads de "Meta Ads" na base orgânica chegaram via anúncio mas iniciaram conversa no WhatsApp — registrados como orgânicos no CRM.</p>
+</div>
+
+<!-- ═══ S5 · META ADS ═══ -->
+<div class="slide slide-light">
+  <div class="logo on-light"><span class="lh">Health</span><span class="lg">Go</span></div>
+  <div class="cat">MÍDIA PAGA · META ADS</div>
+  <h2 class="title">Performance da Campanha (Julho)</h2>
+  <div class="kpi-grid kpi-2x3">
+    <div class="kcard">
+      <div class="kval" style="font-size:36px;">R$ 9.090,80</div>
+      <div class="klbl">Investido no mês</div>
+    </div>
+    <div class="kcard">
+      <div class="kval-blue" style="font-size:36px;">629</div>
+      <div class="klbl">Leads gerados (plataforma)</div>
+    </div>
+    <div class="kcard">
+      <div class="kval-blue" style="font-size:36px;">R$ 14,45</div>
+      <div class="klbl">CPL real (plataforma)</div>
+    </div>
+    <div class="kcard">
+      <div class="kval" style="font-size:36px;">10</div>
+      <div class="klbl">Negócios ganhos (leads de julho)</div>
+    </div>
+    <div class="kcard">
+      <div class="kval-red" style="font-size:36px;">1,6%</div>
+      <div class="klbl">Taxa de conversão (julho)</div>
+    </div>
+    <div class="kcard">
+      <div class="kval" style="font-size:36px;">R$ 272k</div>
+      <div class="klbl">Receita atribuída (julho)</div>
+    </div>
+  </div>
+  <p class="fn" style="color:var(--gray);">CPL calculado sobre os 629 leads reais gerados na plataforma. 545 chegaram ao CRM (86,6% de sincronização) — falha de configuração já identificada e corrigida.</p>
+</div>
+
+<!-- ═══ S6 · GOOGLE ADS ═══ -->
+<div class="slide slide-gray">
+  <div class="logo on-light"><span class="lh">Health</span><span class="lg">Go</span></div>
+  <div class="cat">MÍDIA PAGA · GOOGLE ADS</div>
+  <h2 class="title">Performance da Campanha (Julho)</h2>
+  <div class="kpi-grid kpi-4">
+    <div class="kcard">
+      <div class="kval" style="font-size:34px;">R$ 568,00</div>
+      <div class="klbl">Investido no mês</div>
+    </div>
+    <div class="kcard">
+      <div class="kval-blue" style="font-size:34px;">18</div>
+      <div class="klbl">Leads gerados</div>
+    </div>
+    <div class="kcard">
+      <div class="kval" style="font-size:34px;">R$ 31,56</div>
+      <div class="klbl">CPL (leads gerados)</div>
+    </div>
+    <div class="kcard">
+      <div class="kval-blue" style="font-size:34px;">40</div>
+      <div class="klbl">Conversões na plataforma</div>
+    </div>
+  </div>
+  <p class="fn" style="color:var(--dark);">CPL de R$ 31,56 baseado nos 18 leads reais gerados no período — parte dos leads foi registrada em plataforma diferente antes da migração para o CRM atual. As 40 conversões da plataforma incluem ações como cliques e ligações.</p>
+</div>
+
+<!-- ═══ S7 · MQLs ═══ -->
+<div class="slide slide-light">
+  <div class="logo on-light"><span class="lh">Health</span><span class="lg">Go</span></div>
+  <div class="cat">CANAL ORGÂNICO · QUALIFICAÇÃO</div>
+  <h2 class="title">MQLs Orgânicos</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;flex:1;align-content:center;">
+    <div class="kcard" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:32px 20px;">
+      <div style="font-size:72px;font-weight:800;color:var(--dark);line-height:1;">110</div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:var(--gray);margin-top:8px;text-transform:uppercase;">MQLs Orgânicos</div>
+      <div style="margin-top:12px;font-size:13.5px;font-weight:700;color:var(--blue);">40,9% da base orgânica</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:16px;grid-column:2/4;">
+      <div class="kcard">
+        <div class="kval" style="font-size:36px;">9</div>
+        <div class="klbl">MQLs convertidos em negócio</div>
+      </div>
+      <div class="kcard">
+        <div class="kval-blue" style="font-size:36px;">8,2%</div>
+        <div class="klbl">Taxa de conversão MQL → venda</div>
+      </div>
+      <div class="kcard">
+        <div class="kval" style="font-size:36px;">R$ 250k</div>
+        <div class="klbl">Receita gerada por MQLs</div>
+      </div>
+      <div class="kcard">
+        <div class="kval-blue" style="font-size:36px;">R$ 27.829</div>
+        <div class="klbl">Ticket médio MQL convertido</div>
+      </div>
+    </div>
+  </div>
+  <p class="fn" style="color:var(--gray);">MQL orgânico converte a 8,2% (vs média da base orgânica). Comparando com pago: 533 MQLs pagos geraram apenas 8 vendas (1,5% MQL→deal) — orgânico é <strong style="color:var(--dark);">10,9× mais eficiente</strong> na conversão de MQL.</p>
+</div>
+
+<!-- ═══ S8 · FUNIL DE CONVERSÃO ═══ -->
+<div class="slide slide-light">
+  <div class="logo on-light"><span class="lh">Health</span><span class="lg">Go</span></div>
+  <div class="cat">FUNIL DE CONVERSÃO · JULHO → JULHO</div>
+  <h2 class="title">Leads Gerados em Julho que Fecharam em Julho</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:52px;flex:1;align-items:center;">
+    <div class="funnel-col">
+      <div class="fcol-lbl">CANAL ORGÂNICO</div>
+      <div class="frow">
+        <div class="frlbl">Leads gerados</div>
+        <div class="fbar" style="background:#233A4A;width:300px;">269</div>
+      </div>
+      <div class="frow">
+        <div class="frlbl">MQLs qualificados</div>
+        <div class="fbar" style="background:#62AADD;width:205px;">110 <span class="fpct">40,9%</span></div>
+      </div>
+      <div class="frow">
+        <div class="frlbl">Fecharam em julho</div>
+        <div class="fbar" style="background:#4CAF7D;width:120px;">18 <span class="fpct">6,7%</span></div>
+      </div>
+    </div>
+    <div class="funnel-col">
+      <div class="fcol-lbl">MÍDIA PAGA</div>
+      <div class="frow">
+        <div class="frlbl">Leads gerados (reais)</div>
+        <div class="fbar" style="background:#233A4A;width:300px;">647</div>
+      </div>
+      <div class="frow">
+        <div class="frlbl">MQLs qualificados</div>
+        <div class="fbar" style="background:#62AADD;width:254px;">533 <span class="fpct">82,3%</span></div>
+      </div>
+      <div class="frow">
+        <div class="frlbl">Fecharam em julho</div>
+        <div class="fbar" style="background:#4CAF7D;width:56px;">8 <span class="fpct">1,2%</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="fn">Taxa lead→deal: orgânico <strong>5,6× mais eficiente</strong> (6,7% vs 1,2%). Taxa MQL→deal: orgânico <strong>10,9× mais eficiente</strong> (16,4% vs 1,5%). O pago qualifica mais leads mas converte muito menos na ponta.</p>
+</div>
+
+<!-- ═══ S9 · ORIGEM DAS VENDAS ═══ -->
+<div class="slide slide-light">
+  <div class="logo on-light"><span class="lh">Health</span><span class="lg">Go</span></div>
+  <div class="cat">FINANCEIRO · ATRIBUIÇÃO</div>
+  <h2 class="title">Origem das Vendas (Julho)</h2>
+  <div class="bars">
+    <div class="bar-row">
+      <div class="bar-lbl">Canal Orgânico</div>
+      <div class="bar-track"><div class="bar-fill" style="width:100%;background:#233A4A;"></div></div>
+      <div class="bar-val">30 vendas · 58,8%</div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-lbl">Mídia Paga (Meta + Google)</div>
+      <div class="bar-track"><div class="bar-fill" style="width:70%;background:#62AADD;"></div></div>
+      <div class="bar-val">21 vendas · 41,2%</div>
+    </div>
+  </div>
+  <p class="fn" style="color:var(--dark);">Inclui negócios de leads de safras anteriores que fecharam em julho. Upgrades excluídos (3 contratos de expansão). Atribuição orgânica validada por cruzamento de bases, registro BLIP e histórico de reengajamento. <strong>Faturamento total: R$ 2.181.329</strong>.</p>
+</div>
+
+<!-- ═══ S10 · SAFRA DOS LEADS ═══ -->
+<div class="slide slide-light">
+  <div class="logo on-light"><span class="lh">Health</span><span class="lg">Go</span></div>
+  <div class="cat">ANÁLISE DE COHORT</div>
+  <h2 class="title">Safra dos Leads — De Onde Vieram as 51 Vendas de Julho</h2>
+  <div style="display:flex;gap:16px;flex:1;align-items:stretch;">
+
+    <!-- Orgânico -->
+    <div class="safra-col">
+      <h4>ORGÂNICO — 30 vendas</h4>
+      <div class="safra-row highlight">
+        <span>★ Jul/2026 <span class="safra-badge">mesmo mês</span></span>
+        <span style="display:flex;gap:20px;">
+          <span style="color:var(--dark);font-weight:800;">18 neg.</span>
+          <span style="color:var(--gray);">~9 dias</span>
+        </span>
+      </div>
+      <div class="safra-row normal">
+        <span>Jun/2026</span>
+        <span style="display:flex;gap:20px;">
+          <span style="font-weight:700;">3 neg.</span>
+          <span style="color:var(--gray);">42 dias</span>
+        </span>
+      </div>
+      <div class="safra-row normal">
+        <span>Mai/2026</span>
+        <span style="display:flex;gap:20px;">
+          <span style="font-weight:700;">4 neg.</span>
+          <span style="color:var(--gray);">67 dias</span>
+        </span>
+      </div>
+      <div class="safra-row normal">
+        <span>Abr/2026</span>
+        <span style="display:flex;gap:20px;">
+          <span style="font-weight:700;">2 neg.</span>
+          <span style="color:var(--gray);">102 dias</span>
+        </span>
+      </div>
+      <div class="safra-row normal">
+        <span>Jan/2026</span>
+        <span style="display:flex;gap:20px;">
+          <span style="font-weight:700;">1 neg.</span>
+          <span style="color:var(--gray);">178 dias</span>
+        </span>
+      </div>
+      <div class="safra-row normal">
+        <span>Ago/2025</span>
+        <span style="display:flex;gap:20px;">
+          <span style="font-weight:700;">2 neg.</span>
+          <span style="color:var(--gray);">338 dias</span>
+        </span>
+      </div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid #dde5ed;display:flex;justify-content:space-between;font-size:12px;font-weight:700;">
+        <span style="color:var(--dark);">60% fecharam no mesmo mês</span>
+      </div>
+    </div>
+
+    <!-- Pago -->
+    <div class="safra-col">
+      <h4>PAGO — 21 vendas</h4>
+      <div class="safra-row highlight">
+        <span>★ Jul/2026 <span class="safra-badge">mesmo mês</span></span>
+        <span style="display:flex;gap:20px;">
+          <span style="color:var(--dark);font-weight:800;">8 neg.</span>
+          <span style="color:var(--gray);">14 dias</span>
+        </span>
+      </div>
+      <div class="safra-row normal">
+        <span>Jun/2026</span>
+        <span style="display:flex;gap:20px;">
+          <span style="font-weight:700;">4 neg.</span>
+          <span style="color:var(--gray);">34 dias</span>
+        </span>
+      </div>
+      <div class="safra-row normal">
+        <span>Abr/2026</span>
+        <span style="display:flex;gap:20px;">
+          <span style="font-weight:700;">1 neg.</span>
+          <span style="color:var(--gray);">87 dias</span>
+        </span>
+      </div>
+      <div class="safra-row normal">
+        <span>Jan/2026</span>
+        <span style="display:flex;gap:20px;">
+          <span style="font-weight:700;">2 neg.</span>
+          <span style="color:var(--gray);">189 dias</span>
+        </span>
+      </div>
+      <div class="safra-row normal">
+        <span>Set/2025</span>
+        <span style="display:flex;gap:20px;">
+          <span style="font-weight:700;">2 neg.</span>
+          <span style="color:var(--gray);">316 dias</span>
+        </span>
+      </div>
+      <div class="safra-row normal">
+        <span>Ago/2025</span>
+        <span style="display:flex;gap:20px;">
+          <span style="font-weight:700;">4 neg.</span>
+          <span style="color:var(--gray);">336 dias</span>
+        </span>
+      </div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid #dde5ed;display:flex;justify-content:space-between;font-size:12px;font-weight:700;">
+        <span style="color:var(--dark);">38% fecharam no mesmo mês</span>
+      </div>
+    </div>
+
+  </div>
+  <p class="fn">Maturação = dias entre a criação do lead e o fechamento do negócio. Atribuição orgânica validada por cruzamento de bases, registro BLIP, reengajamento SDR e follow-up de closer. Total: 30 org. + 21 pago = 51 negócios.</p>
+</div>
+
+<!-- ═══ S11 · MATURAÇÃO ═══ -->
+<div class="slide slide-gray">
+  <div class="logo on-light"><span class="lh">Health</span><span class="lg">Go</span></div>
+  <div class="cat">TEMPO DE MATURAÇÃO</div>
+  <h2 class="title">Quanto Tempo um Lead Leva para Virar Venda?</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;flex:1;align-content:center;">
+
+    <!-- Orgânico maturação -->
+    <div style="background:var(--white);border-radius:14px;padding:28px 28px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--blue);margin-bottom:20px;">ORGÂNICO</div>
+      <div style="display:flex;gap:16px;margin-bottom:24px;">
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:48px;font-weight:800;color:var(--dark);">7</div>
+          <div style="font-size:11px;font-weight:600;color:var(--gray);margin-top:4px;">dias (leads do mês)</div>
+        </div>
+        <div style="width:1px;background:#dde5ed;"></div>
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:48px;font-weight:800;color:var(--dark);">137</div>
+          <div style="font-size:11px;font-weight:600;color:var(--gray);margin-top:4px;">dias (safras anteriores)</div>
+        </div>
+      </div>
+      <div style="background:#f4f6f8;border-radius:8px;padding:12px 14px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:12px;color:var(--gray);">Mesmo mês (jul/jul)</span>
+          <span style="font-size:13px;font-weight:700;color:var(--green);">18 vendas · 60%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="font-size:12px;color:var(--gray);">Safras anteriores</span>
+          <span style="font-size:13px;font-weight:700;color:var(--dark);">12 vendas · 40%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pago maturação -->
+    <div style="background:var(--white);border-radius:14px;padding:28px 28px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--blue);margin-bottom:20px;">PAGO</div>
+      <div style="display:flex;gap:16px;margin-bottom:24px;">
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:48px;font-weight:800;color:var(--dark);">14</div>
+          <div style="font-size:11px;font-weight:600;color:var(--gray);margin-top:4px;">dias (leads do mês)</div>
+        </div>
+        <div style="width:1px;background:#dde5ed;"></div>
+        <div style="flex:1;text-align:center;">
+          <div style="font-size:48px;font-weight:800;color:var(--dark);">197</div>
+          <div style="font-size:11px;font-weight:600;color:var(--gray);margin-top:4px;">dias (safras anteriores)</div>
+        </div>
+      </div>
+      <div style="background:#f4f6f8;border-radius:8px;padding:12px 14px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:12px;color:var(--gray);">Mesmo mês (jul/jul)</span>
+          <span style="font-size:13px;font-weight:700;color:var(--green);">8 vendas · 38%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="font-size:12px;color:var(--gray);">Safras anteriores</span>
+          <span style="font-size:13px;font-weight:700;color:var(--dark);">13 vendas · 62%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Insight 1 -->
+    <div style="background:var(--dark);border-radius:14px;padding:22px 24px;color:white;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:10px;">INSIGHT</div>
+      <p style="font-size:14px;line-height:1.6;color:rgba(255,255,255,.85);">Leads orgânicos convertem <strong style="color:#fff;">60%</strong> no mesmo mês que entram, enquanto leads pagos convertem <strong style="color:#fff;">38%</strong>. O orgânico tem ciclo de venda significativamente mais curto.</p>
+    </div>
+
+    <!-- Insight 2 -->
+    <div style="background:var(--dark);border-radius:14px;padding:22px 24px;color:white;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:10px;">CAUDA LONGA</div>
+      <p style="font-size:14px;line-height:1.6;color:rgba(255,255,255,.85);">Leads de <strong style="color:#fff;">ago/2025</strong> ainda converteram em julho — 7 negócios com mais de 330 dias de maturação. O investimento em geração de demanda tem retorno de longo prazo.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ S12 · MÉTRICAS FINANCEIRAS ═══ -->
+<div class="slide slide-dark">
+  <div class="logo on-dark"><span class="lh">Health</span><span class="lg">Go</span></div>
+  <div class="cat">FINANCEIRO</div>
+  <h2 class="title">Resultado do Mês — Visão Geral</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;flex:1;align-content:center;">
+    <!-- Destaque meta -->
+    <div style="background:rgba(255,255,255,.08);border-radius:14px;padding:28px 28px;grid-column:1/3;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--blue);margin-bottom:10px;">FATURAMENTO REALIZADO</div>
+        <div style="font-size:56px;font-weight:800;color:#fff;line-height:1;">R$ 2.181.329</div>
+        <div style="font-size:14px;color:rgba(255,255,255,.55);margin-top:8px;">Meta: R$ 2.090.000</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:72px;font-weight:800;color:#4CAF7D;line-height:1;">104,4%</div>
+        <div style="font-size:13px;font-weight:600;color:#4CAF7D;margin-top:6px;">+R$ 91.329 de superávit</div>
+      </div>
+    </div>
+    <!-- KPIs -->
+    <div class="kcard-dark">
+      <div class="kval-white" style="font-size:34px;">51</div>
+      <div class="klbl-dark">Novos contratos fechados</div>
+    </div>
+    <div class="kcard-dark">
+      <div class="kval-white" style="font-size:34px;">R$ 42.771</div>
+      <div class="klbl-dark">Ticket médio (+12,6%)</div>
+    </div>
+    <div class="kcard-dark">
+      <div class="kval-blue" style="font-size:34px;">R$ 419,94</div>
+      <div class="klbl-dark">CAC real (mídia paga)</div>
+    </div>
+    <div class="kcard-dark">
+      <div class="kval-blue" style="font-size:34px;">77,9×</div>
+      <div class="klbl-dark">ROAS — receita paga atribuída</div>
+    </div>
+  </div>
+  <p class="fn">51 novos contratos + 3 upgrades. CAC = R$ 9.658,58 / 23 vendas pagas. ROAS = R$ 752.471 / R$ 9.658,58.</p>
+</div>
+
+<!-- ═══ S13 · INSIGHTS ═══ -->
+<div class="slide slide-dark">
+  <div class="logo on-dark"><span class="lh">Health</span><span class="lg">Go</span></div>
+  <div class="cat">INSIGHTS PARA O PRÓXIMO CICLO</div>
+  <h2 class="title">O Que os Dados Revelam para Agosto</h2>
+  <div class="risk-grid" style="grid-template-columns:1fr 1fr;">
+    <div class="rcard" style="border-color:#4CAF7D;">
+      <div class="rtag" style="color:#4CAF7D;">ALAVANCA #1 · BRANDING & POSICIONAMENTO</div>
+      <div class="rtitle">Marca forte é o maior ativo de geração de demanda</div>
+      <div class="rbody">58,8% das vendas e 40,9% dos MQLs vieram do orgânico — com investimento zero em mídia nesse canal. Leads orgânicos chegam com intenção e confiança já construídas: são pessoas que buscaram ativamente, acompanham os canais da marca ou foram indicadas. Isso não acontece por acaso — é resultado direto do trabalho de branding, presença e posicionamento. Para agosto, aprofundar a atuação orgânica é a alavanca de menor custo e maior retorno.</div>
+    </div>
+    <div class="rcard" style="border-color:#F5A623;">
+      <div class="rtag" style="color:#F5A623;">ALAVANCA #2 · PIPELINE ACUMULADO</div>
+      <div class="rtitle">40% das vendas vieram de safras anteriores</div>
+      <div class="rbody">12 das 30 vendas orgânicas de julho fecharam com leads captados antes de julho — alguns com mais de 300 dias em maturação. Existe uma carteira de leads orgânicos não convertidos que já está paga e aquecida. Reengajamento sistemático dessas safras é receita incremental sem custo de aquisição.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ S14 · ENCERRAMENTO ═══ -->
+<div class="slide slide-dark">
+  <div class="logo on-dark"><span class="lh">Health</span><span class="lg">Go</span></div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:48px;">
+    <div class="cat">OBRIGADO</div>
+    <h2 style="font-size:42px;font-weight:800;color:#fff;line-height:1.2;max-width:600px;">Relatório de Geração de Demanda — Julho 2026</h2>
+    <p style="font-size:13px;color:rgba(255,255,255,.42);margin-top:18px;line-height:1.7;max-width:500px;">Fonte: HubSpot CRM (export 02/08/2026), Meta Ads e Google Ads. Elaborado pela área de Marketing.</p>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<nav class="nav">
+  <button class="nbtn" id="prev">&#8592;</button>
+  <span class="ncnt" id="cnt">1 / 14</span>
+  <button class="nbtn" id="next">&#8594;</button>
+</nav>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let cur = 0;
+  function go(n){
+    slides[cur].classList.remove('active');
+    cur=((n%total)+total)%total;
+    slides[cur].classList.add('active');
+    document.getElementById('cnt').textContent=(cur+1)+' / '+total;
+  }
+  document.getElementById('next').addEventListener('click',()=>go(cur+1));
+  document.getElementById('prev').addEventListener('click',()=>go(cur-1));
+  document.addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown',' '].includes(e.key)){e.preventDefault();go(cur+1);}
+    if(['ArrowLeft','ArrowUp'].includes(e.key)){e.preventDefault();go(cur-1);}
+  });
+  document.getElementById('deck').addEventListener('click',e=>{if(!e.target.closest('nav'))go(cur+1);});
+</script>
+</body>
+</html>
